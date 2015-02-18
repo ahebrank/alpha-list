@@ -123,7 +123,7 @@ class Alpha_list {
     $output = '<ul class="alpha-letters">';
     foreach ($this->alphabet as $letter) {
       $output .= "\n"."  <li>";
-      if ($this->letter_count($letter)) {
+      if ($this->_letter_count($letter)) {
         // linkable
         $output .= '<a href="' . $link_base . $letter.'">' . $letter . "</a>";
       }
