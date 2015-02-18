@@ -68,21 +68,17 @@ class Alpha_list {
         ->from('channel_data');
     }
 
-    $result = $result->order_by('val', 'asc');
     if (!is_null($channel_id)) {
       $result = $result->where('channel_id', $channel_id);
     }
-    $result = $result->get()->result();
+    $result = $result->order_by('val asc')->get()->result();
 
-    // make a lookup
-    $this->entry_lookup = array();
-    foreach ($result as $row) {
-      $this->entry_lookup[$row->entry_id] = $row->val;
-    }
+    $this->entry_lookup = $result;
   }
 
   /**
    * generate a list of IDs for subsequent use in an exp:channel:entries
+   * no distinction between letters
    */
   function entry_ids() {
 
@@ -92,20 +88,20 @@ class Alpha_list {
     $filtered = array();
     $started = false;
     $current_letter = '';
-    foreach ($this->entry_lookup as $id => $val) {
-      $starts_with = $this->_starts_with($val);
+    foreach ($this->entry_lookup as $row) {
+      $starts_with = $this->_starts_with($row->val);
       if ($starts_with == $this->start_letter) {
         $started = true;
       }
       if ($started) {
         if ($count < $this->soft_limit) {
           // no problem
-          $filtered[] = $id;
+          $filtered[] = $row->entry_id;
         }
         else {
           // over the limit, but still on the same letter
           if ($starts_with == $current_letter) {
-            $filtered[] = $id;
+            $filtered[] = $row->entry_id;
           }
           else {
             break;
@@ -140,6 +136,32 @@ class Alpha_list {
     }
     $output .= "\n</ul>";
 
+    $this->return_data = $output;
+    return $this->return_data;
+  }
+
+  /**
+   * return letters with items in a loop
+   * this is called as a tag pair, looping through the alphabet
+   */
+  function letters() {
+    $tagdata = ee()->TMPL->tagdata;
+    $output = "";
+    $total = 0;
+    foreach ($this->alphabet as $letter) {
+      $entries = $this->_entry_ids_for_letter($letter);
+      $letter_count = count($entries);
+      $total += $letter_count;
+      if ($letter_count) {
+        $data = array(
+          'letter' => $letter,
+          'entry_ids' => implode("|", $entries));
+        $output .= ee()->TMPL->parse_variables_row($tagdata, $data);
+      }
+      if ($total > $this->soft_limit) {
+        break;
+      }
+    }
     $this->return_data = $output;
     return $this->return_data;
   }
@@ -185,14 +207,22 @@ class Alpha_list {
    * number of entries for a letter
    */
   private function _letter_count($letter) {
+    $filtered = $this->_entry_ids_for_letter($letter);
+    return (count($filtered));
+  }
+
+  /**
+   * return all entry IDs for a letter
+   */
+  private function _entry_ids_for_letter($letter) {
     // array_filter would be nice, but can't rely on closures being available
     $filtered = array();
-    foreach ($this->entry_lookup as $id => $val) {
-      if ($this->_starts_with($val) == $letter) {
-        $filtered[$id] = $val;
+    foreach ($this->entry_lookup as $row) {
+      if ($this->_starts_with($row->val) == $letter) {
+        $filtered[] = $row->entry_id;
       }
     }
-    return (count($filtered));
+    return $filtered;
   }
 
   function usage() {
