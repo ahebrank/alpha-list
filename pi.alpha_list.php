@@ -25,6 +25,10 @@ class Alpha_list {
   var $channel_title_fields = array('title');
   // well, you know
   var $alphabet = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
+  
+  var $entry_lookup = array();
+  var $start_letter = 'A';
+  var $soft_limit = 10;
 
   /**
    * make an entry_id => field value lookup
