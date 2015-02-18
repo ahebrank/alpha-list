@@ -116,6 +116,7 @@ class Alpha_list {
     }
 
     $this->return_data = implode('|', $filtered);
+    return $this->return_data;
   }
 
   /**
@@ -140,6 +141,7 @@ class Alpha_list {
     $output .= "\n</ul>";
 
     $this->return_data = $output;
+    return $this->return_data;
   }
 
   /**
@@ -153,7 +155,7 @@ class Alpha_list {
     if ($result->num_rows()==0) {
       return false;
     }
-    $result = $result->result();
+    $result = $result->row();
     return "field_id_" . $result->field_id;
   }
 
@@ -168,7 +170,7 @@ class Alpha_list {
     if ($result->num_rows()==0) {
       return false;
     }
-    $result = $result->result();
+    $result = $result->row();
     return $result->channel_id;
   }
 
