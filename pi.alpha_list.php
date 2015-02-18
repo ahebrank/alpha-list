@@ -77,7 +77,7 @@ class Alpha_list {
     // make a lookup
     $this->entry_lookup = array();
     foreach ($result as $row) {
-      $this->entry_lookup[$row['entry_id']] = $row['val'];
+      $this->entry_lookup[$row->entry_id] = $row->val;
     }
   }
 
