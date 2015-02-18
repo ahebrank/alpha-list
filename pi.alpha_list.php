@@ -98,7 +98,7 @@ class Alpha_list {
         $started = true;
       }
       if ($started) {
-        if ($count < $softlimit) {
+        if ($count < $this->softlimit) {
           // no problem
           $filtered[] = $id;
         }
