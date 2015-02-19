@@ -143,12 +143,22 @@ class Alpha_list {
   /**
    * return letters with items in a loop
    * this is called as a tag pair, looping through the alphabet
+   * populates tags {letter} and {entry_ids} (a piped list of entries)
    */
   function letters() {
     $tagdata = ee()->TMPL->tagdata;
     $output = "";
+
+    // slice the alphabet by starting letter
+    $i = array_search($this->start_letter, $this->alphabet);
+    $sliced_alphabet = $this->alphabet;
+    if ($i !== false) {
+      $sliced_alphabet = array_slice($this->alphabet, $i);
+    }
+
+    // loop each letter until passing the soft limit
     $total = 0;
-    foreach ($this->alphabet as $letter) {
+    foreach ($sliced_alphabet as $letter) {
       $entries = $this->_entry_ids_for_letter($letter);
       $letter_count = count($entries);
       $total += $letter_count;
@@ -158,10 +168,13 @@ class Alpha_list {
           'entry_ids' => implode("|", $entries));
         $output .= ee()->TMPL->parse_variables_row($tagdata, $data);
       }
+
+      // has this letter put us over the limit?
       if ($total > $this->soft_limit) {
         break;
       }
     }
+
     $this->return_data = $output;
     return $this->return_data;
   }
