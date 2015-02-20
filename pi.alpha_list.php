@@ -61,8 +61,6 @@ class Alpha_list {
         if (empty($v)) {
           unset($filters[$f]);
         }
-        // fuzzy matching
-        $filters[$f . " LIKE"] = "%".$v."%";
       }
       // now split between regular filters and relationships
       $relationship_filters = $this->_get_relationship_filters($filters);
@@ -74,6 +72,12 @@ class Alpha_list {
           $this->entry_lookup = array();
           return;
         }
+      }
+
+      // switch to fuzzy matching
+      foreach ($filters as $f => $v) {
+        unset($filters[$f]);
+        $filters[$f . " LIKE"] = "%".$v."%";
       }
     }
 
