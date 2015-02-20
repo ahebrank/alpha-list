@@ -51,11 +51,37 @@ class Alpha_list {
       }
     }
 
+    $filtering = ee()->TMPL->fetch_param('use_filters', 'no');
+    $filters = null;
+    if ($filtering == "yes") {
+      $valid_filters = $this->_get_valid_filters($channel_id, $_GET);
+      $filters = array_combine($this->_get_field_ids(array_keys($valid_filters)), $valid_filters);
+      // clean out empty filters
+      foreach ($filters as $f => $v) {
+        if (empty($v)) {
+          unset($filters[$f]);
+        }
+        // fuzzy matching
+        $filters[$f] = "%".$v."%";
+      }
+      // now split between regular filters and relationships
+      $relationship_filters = $this->_get_relationship_filters($filters);
+      if (!empty($relationship_filters)) {
+        $filters = array_diff($filters, $relationship_filters);
+        $relationship_parents = $this->_get_relationship_matches($relationship_filters);
+        if (empty($relationship_parents)) {
+          // nothing found with these relationship criteria!
+          $this->entry_lookup = array();
+          return;
+        }
+      }
+    }
+
     // using a channel_title field or channel_data field?
     // make an entry_id => relevant field value lookup
+    $select = array('channel_titles.entry_id AS entry_id');
     if (in_array($letter_field, $this->channel_title_fields)) {
-      $result = ee()->db->select(array('entry_id', $letter_field . " AS val"))
-        ->from('channel_titles');
+      $select[] = $letter_field . " AS val";
     }
     else {
       // find the field id
@@ -64,12 +90,21 @@ class Alpha_list {
         $this->return_data = "Field not found.";
         return $this->return_data;
       }
-      $result = ee()->db->select(array('entry_id', $field_id . " AS val"))
-        ->from('channel_data');
+      $select[] = $field_id . " AS val";
     }
 
+    $result = ee()->db->select($select)
+        ->from('channel_titles')
+        ->join('channel_data', 'channel_titles.entry_id = channel_data.entry_id');
+
     if (!is_null($channel_id)) {
-      $result = $result->where('channel_id', $channel_id);
+      $result = $result->where('channel_titles.channel_id', $channel_id);
+    }
+    if (!empty($filters)) {
+      $result = $result->where($filters);
+    }
+    if (!empty($relationship_filters)) {
+      $result = $result->where_in('channel_titles.entry_id', $relationship_parents);
     }
     $result = $result->order_by('val asc')->get()->result();
 
@@ -183,6 +218,9 @@ class Alpha_list {
    * return a field id, if given a field name
    */
   private function _get_field_id($field_name) {
+    if (in_array($field_name, $this->channel_title_fields)) {
+      return $field_name;
+    }
     $result = ee()->db->select('field_id')
       ->from('channel_fields')
       ->where('field_name', $field_name)
@@ -192,6 +230,13 @@ class Alpha_list {
     }
     $result = $result->row();
     return "field_id_" . $result->field_id;
+  }
+
+  /**
+   * the array version of _get_field_id
+   */
+  private function _get_field_ids($field_names) {
+    return array_map(array($this, '_get_field_id'), $field_names);
   }
 
   /**
@@ -236,6 +281,119 @@ class Alpha_list {
       }
     }
     return $filtered;
+  }
+
+  /**
+   * return a list of valid items to filter by
+   * these include the title fields and any fields in the channel
+   */
+  private function _get_valid_filters($channel_id, $filters) {
+    $allowed = $this->channel_title_fields;
+
+    // get all field names associated with this channel
+    // find the field group
+    if (!is_null($channel_id)) {
+      $result = ee()->db->select('field_group')
+        ->from('channels')
+        ->where('channel_id', $channel_id)
+        ->get();
+      if ($result->num_rows()==0) {
+        return array_intersect_key($filters, array_flip($allowed));
+      }
+      $result = $result->row();
+      $field_group = $result->field_group;
+    }
+
+    // find the fieldnames in this group
+    $result = ee()->db->select('field_name')
+      ->from('channel_fields');
+    if (!is_null($channel_id)) {
+      $result = $result->where('group_id', $field_group);
+    }
+    $result = $result->get();
+    if ($result->num_rows()==0) {
+      return array_intersect_key($filters, array_flip($allowed));
+    }
+    foreach ($result->result() as $row) {
+      $allowed[] = $row->field_name;
+    }
+    $allowed = array_flip($allowed);
+
+    return array_intersect_key($filters, $allowed);
+  }
+
+  /**
+   * figure out which filter fields are relationships
+   */
+  private function _get_relationship_filters($filters) {
+    if (empty($filters)) {
+      return null;
+    }
+    $field_ids = array_keys($filters);
+    // since these are now "field_id_N", need to make them back into just numbers
+    $ids = array();
+    foreach ($field_ids as $f) {
+      $ids[] = str_replace("field_id_", "", $f);
+    }
+
+    $result = ee()->db->select('field_id')
+      ->from('channel_fields')
+      ->where_in('field_id', $ids)
+      ->where('field_type', 'relationship')
+      ->get();
+
+    if ($result->num_rows() == 0) {
+      return null;
+    }
+
+    $relationship_field_ids = array();
+    foreach ($result->result() as $row) {
+      $relationship_field_ids[] = "field_id_" . $row->field_id;
+    }
+
+    return array_intersect_key($filters, array_flip($relationship_field_ids));
+  }
+
+  /**
+   * find matches for relationship filters
+   */
+  private function _get_relationship_matches($filters) {
+    $parents = array();
+    $ids = array();
+    foreach ($filters as $field_id => $val) {
+      $id = str_replace("field_id_", "", $field_id);
+
+      // find all matching parents for this field and child value
+      $result = ee()->db->select('relationships.parent_id AS entry_id')
+        ->from('relationships')
+        ->join('channel_titles', 'relationships.child_id = channel_titles.entry_id')
+        ->where('relationships.field_id', $id);
+      if (is_numeric($val)) {
+        $result = $result->where('relationships.child_id', $val);
+      } 
+      else {
+        // assume it's the url_title
+        $result = $result->where('channel_titles.url_title', $val);
+      }
+      $result = $result->get();
+      if ($result->num_rows() == 0) {
+        return array();
+      }
+
+      $this_field_ids = array();
+      foreach ($result->result() as $row) {
+        $this_field_ids[] = $row->entry_id;
+      }
+
+      if (empty($ids)) {
+        $ids = $this_field_ids;
+      }
+      else {
+        $ids = array_intersect($ids, $this_field_ids);
+      }
+    }
+
+    return $ids;
   }
 
   function usage() {
