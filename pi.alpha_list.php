@@ -55,29 +55,31 @@ class Alpha_list {
     $filters = null;
     if ($filtering == "yes") {
       $valid_filters = $this->_get_valid_filters($channel_id, $_GET);
-      $filters = array_combine($this->_get_field_ids(array_keys($valid_filters)), $valid_filters);
-      // clean out empty filters
-      foreach ($filters as $f => $v) {
-        if (empty($v)) {
-          unset($filters[$f]);
+      if (!empty($valid_filters)) {
+        $filters = array_combine($this->_get_field_ids(array_keys($valid_filters)), $valid_filters);
+        // clean out empty filters
+        foreach ($filters as $f => $v) {
+          if (empty($v)) {
+            unset($filters[$f]);
+          }
         }
-      }
-      // now split between regular filters and relationships
-      $relationship_filters = $this->_get_relationship_filters($filters);
-      if (!empty($relationship_filters)) {
-        $filters = array_diff($filters, $relationship_filters);
-        $relationship_parents = $this->_get_relationship_matches($relationship_filters);
-        if (empty($relationship_parents)) {
-          // nothing found with these relationship criteria!
-          $this->entry_lookup = array();
-          return;
+        // now split between regular filters and relationships
+        $relationship_filters = $this->_get_relationship_filters($filters);
+        if (!empty($relationship_filters)) {
+          $filters = array_diff($filters, $relationship_filters);
+          $relationship_parents = $this->_get_relationship_matches($relationship_filters);
+          if (empty($relationship_parents)) {
+            // nothing found with these relationship criteria!
+            $this->entry_lookup = array();
+            return;
+          }
         }
-      }
 
-      // switch to fuzzy matching
-      foreach ($filters as $f => $v) {
-        unset($filters[$f]);
-        $filters[$f . " LIKE"] = "%".$v."%";
+        // switch to fuzzy matching
+        foreach ($filters as $f => $v) {
+          unset($filters[$f]);
+          $filters[$f . " LIKE"] = "%".$v."%";
+        }
       }
     }
 
