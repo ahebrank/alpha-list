@@ -160,14 +160,18 @@ class Alpha_list {
    * return a list of links to letters, with inactive links for letters without entries
    */
   function letter_list() {
+    // url base
     $link_base = ee()->TMPL->fetch_param('url_root', "");
+    // append a query string?
+    $include_query = ee()->TMPL->fetch_param('include_query', "no");
+    $query_string = ($include_query == "yes")? $_SERVER['QUERY_STRING'] : "";
 
     $output = '<ul class="alpha-letters">';
     foreach ($this->alphabet as $letter) {
       $output .= "\n"."  <li>";
       if ($this->_letter_count($letter)) {
         // linkable
-        $output .= '<a href="' . $link_base . $letter.'">' . $letter . "</a>";
+        $output .= '<a href="' . $link_base . $letter . $query_string . '">' . $letter . "</a>";
       }
       else {
         // just a label
