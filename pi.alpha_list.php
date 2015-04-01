@@ -164,7 +164,7 @@ class Alpha_list {
     $link_base = ee()->TMPL->fetch_param('url_root', "");
     // append a query string?
     $include_query = ee()->TMPL->fetch_param('include_query', "no");
-    $query_string = ($include_query == "yes")? $_SERVER['QUERY_STRING'] : "";
+    $query_string = ($include_query == "yes")? "?" . $_SERVER['QUERY_STRING'] : "";
 
     $output = '<ul class="alpha-letters">';
     foreach ($this->alphabet as $letter) {
