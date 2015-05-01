@@ -135,7 +135,7 @@ class Alpha_list {
         $started = true;
       }
       if ($started) {
-        if ($count < $this->soft_limit) {
+        if (($count < $this->soft_limit) || ($this->soft_limit == -1)) {
           // no problem
           $filtered[] = $row->entry_id;
         }
@@ -215,7 +215,7 @@ class Alpha_list {
       }
 
       // has this letter put us over the limit?
-      if ($total > $this->soft_limit) {
+      if (($this->soft_limit != -1) && ($total > $this->soft_limit)) {
         break;
       }
     }
