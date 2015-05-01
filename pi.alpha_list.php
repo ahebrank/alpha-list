@@ -43,7 +43,7 @@ class Alpha_list {
     $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', 'A'));
 
     // special case to show everything
-    if ($this->start_letter == "all") {
+    if ($this->start_letter == "ALL") {
       $this->start_letter = 'A';
       $this->soft_limit = -1;
     }
