@@ -39,8 +39,14 @@ class Alpha_list {
     $letter_field = ee()->TMPL->fetch_param('field_name', 'title');
 
     // optional
-    $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', 'A'));
     $this->soft_limit = ee()->TMPL->fetch_param('soft_limit', 10);
+    $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', 'A'));
+
+    // special case to show everything
+    if ($this->start_letter == "all") {
+      $this->start_letter = 'A';
+      $this->soft_limit = -1;
+    }
 
     // lookup the channel name, if it's not a number
     if (!is_null($channel_id) && !is_numeric($channel_id)) {
