@@ -172,9 +172,12 @@ class Alpha_list {
     $include_query = ee()->TMPL->fetch_param('include_query', "no");
     $query_string = ($include_query == "yes")? "?" . $_SERVER['QUERY_STRING'] : "";
 
+    $nsegment = ee()->uri->total_segments();
+    $current_letter = ee()->uri->segment($nsegment);
+
     $output = '<ul class="alpha-letters">';
     foreach ($this->alphabet as $letter) {
-      $output .= "\n"."  <li>";
+      $output .= "\n"."  <li". (strtoupper($letter)==strtoupper($current_letter)? ' class="active">':'>');
       if ($this->_letter_count($letter)) {
         // linkable
         $output .= '<a href="' . $link_base . $letter . $query_string . '">' . $letter . "</a>";
