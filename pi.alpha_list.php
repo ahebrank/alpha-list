@@ -39,8 +39,8 @@ class Alpha_list {
     $letter_field = ee()->TMPL->fetch_param('field_name', 'title');
 
     // optional
-    $this->soft_limit = ee()->TMPL->fetch_param('soft_limit', 10);
-    $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', 'A'));
+    $this->soft_limit = ee()->TMPL->fetch_param('soft_limit', $this->soft_limit);
+    $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', $this->start_letter));
 
     // special case to show everything
     if ($this->start_letter == "ALL") {
