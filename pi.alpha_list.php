@@ -29,6 +29,7 @@ class Alpha_list {
   var $entry_lookup = array();
   var $start_letter = 'A';
   var $soft_limit = 10;
+  var $return_data = "";
 
   /**
    * make an entry_id => field value lookup
@@ -42,13 +43,8 @@ class Alpha_list {
     $this->soft_limit = ee()->TMPL->fetch_param('soft_limit', $this->soft_limit);
     $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', $this->start_letter));
 
-    // special cases to show everything
+    // special case to show everything
     if ($this->start_letter == "ALL") {
-      $this->start_letter = 'A';
-      $this->soft_limit = -1;
-    }
-    $no_limit_if_filters = ee()->TMPL->fetch_param('no_limit_if_filters', 'no');
-    if ($no_limit_if_filters == 'yes') {
       $this->start_letter = 'A';
       $this->soft_limit = -1;
     }
@@ -94,11 +90,19 @@ class Alpha_list {
       }
     }
 
-    // suppress output if filters present
-    $hide_if_filters = ee()->TMPL->fetch_param('hide_if_filters', 'no');
-    if (!empty($filters) && $hide_if_filters == 'yes') {
-      $this->return_data = "";
-      return "";
+    if (!empty($filters) || !empty($relationship_filters)) {
+      // no soft limit if filters present
+      $no_limit_if_filters = ee()->TMPL->fetch_param('no_limit_if_filters', 'no');
+      if ($no_limit_if_filters == 'yes') {
+        $this->start_letter = 'A';
+        $this->soft_limit = -1;
+      }
+      // suppress output if filters present
+      $hide_if_filters = ee()->TMPL->fetch_param('hide_if_filters', 'no');
+      if ($hide_if_filters == 'yes') {
+        $this->return_data = -1;
+        return;
+      }
     }
 
     // using a channel_title field or channel_data field?
@@ -179,6 +183,10 @@ class Alpha_list {
    * return a list of links to letters, with inactive links for letters without entries
    */
   function letter_list() {
+    if ($this->return_data == -1) {
+      return "";
+    }
+
     // url base
     $link_base = ee()->TMPL->fetch_param('url_root', "");
     // append a query string?
@@ -213,6 +221,10 @@ class Alpha_list {
    * populates tags {letter} and {entry_ids} (a piped list of entries)
    */
   function letters() {
+    if ($this->return_data == -1) {
+      return "";
+    }
+
     $tagdata = ee()->TMPL->tagdata;
     $output = "";
 
