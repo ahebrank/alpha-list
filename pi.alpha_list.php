@@ -42,8 +42,13 @@ class Alpha_list {
     $this->soft_limit = ee()->TMPL->fetch_param('soft_limit', $this->soft_limit);
     $this->start_letter = strtoupper(ee()->TMPL->fetch_param('start_letter', $this->start_letter));
 
-    // special case to show everything
+    // special cases to show everything
     if ($this->start_letter == "ALL") {
+      $this->start_letter = 'A';
+      $this->soft_limit = -1;
+    }
+    $no_limit_if_filters = ee()->TMPL->fetch_param('no_limit_if_filters', 'no');
+    if ($no_limit_if_filters == 'yes') {
       $this->start_letter = 'A';
       $this->soft_limit = -1;
     }
@@ -89,6 +94,13 @@ class Alpha_list {
       }
     }
 
+    // suppress output if filters present
+    $hide_if_filters = ee()->TMPL->fetch_param('hide_if_filters', 'no');
+    if (!empty($filters) && $hide_if_filters == 'yes') {
+      $this->return_data = "";
+      return "";
+    }
+
     // using a channel_title field or channel_data field?
     // make an entry_id => relevant field value lookup
     $select = array('channel_titles.entry_id AS entry_id');
@@ -113,6 +125,7 @@ class Alpha_list {
       $result = $result->where('channel_titles.channel_id', $channel_id);
     }
     if (!empty($filters)) {
+      $this->set('filters', $filters);
       $result = $result->where($filters);
     }
     if (!empty($relationship_filters)) {
