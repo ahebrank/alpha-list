@@ -155,6 +155,21 @@ class Alpha_list {
 
   /**
    * generate a list of IDs for subsequent use in an exp:channel:entries
+   * no alphabetical ordering
+   */
+  function raw_entry_ids() {
+
+    $ids = array();
+    foreach ($this->entry_lookup as $row) {
+      $ids[] = $row->entry_id;
+    }
+
+    $this->return_data = implode('|', $ids);
+    return $this->return_data;
+  }
+
+  /**
+   * generate a list of IDs for subsequent use in an exp:channel:entries
    * no distinction between letters
    */
   function entry_ids() {
