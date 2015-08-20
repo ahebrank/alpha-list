@@ -116,7 +116,7 @@ class Alpha_list {
     }
     else {
       // suppress output if no filters present
-      $hide_if_filters = ee()->TMPL->fetch_param('hide_if_no_filters', 'no');
+      $hide_if_no_filters = ee()->TMPL->fetch_param('hide_if_no_filters', 'no');
       if ($hide_if_no_filters == 'yes') {
         $this->return_data = -1;
         return;
@@ -153,7 +153,7 @@ class Alpha_list {
     if (!empty($relationship_filters)) {
       $result = $result->where_in('channel_titles.entry_id', $relationship_parents);
     }
-    if ($exclude_only_if_filters == 'no' || (!empty($filters) || !empty($relationship_filters))) {
+    if (($exclude_only_if_filters == 'no') || (!empty($filters) || !empty($relationship_filters))) {
       if (!empty($exclude_if_field_value)) {
         $result = $result->where("($exclude_if_field_value = 0 OR $exclude_if_field_value = '')");
       }
