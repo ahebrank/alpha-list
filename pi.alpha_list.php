@@ -172,7 +172,7 @@ class Alpha_list {
    */
   function raw_entry_ids() {
 
-    $ids = array();
+    $ids = array(0);
     foreach ($this->entry_lookup as $row) {
       $ids[] = $row->entry_id;
     }
