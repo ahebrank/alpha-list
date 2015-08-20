@@ -147,7 +147,6 @@ class Alpha_list {
       $result = $result->where('channel_titles.channel_id', $channel_id);
     }
     if (!empty($filters)) {
-      $this->set('filters', $filters);
       $result = $result->where($filters);
     }
     if (!empty($relationship_filters)) {
