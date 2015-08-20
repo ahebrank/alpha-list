@@ -60,8 +60,8 @@ class Alpha_list {
 
     $filtering = ee()->TMPL->fetch_param('use_filters', 'no');
     $filters = null;
+    $valid_filters = $this->_get_valid_filters($channel_id, $_GET);
     if ($filtering == "yes") {
-      $valid_filters = $this->_get_valid_filters($channel_id, $_GET);
       if (!empty($valid_filters)) {
         $filters = array_combine($this->_get_field_ids(array_keys($valid_filters)), $valid_filters);
         // clean out empty filters
@@ -89,6 +89,10 @@ class Alpha_list {
         }
       }
     }
+
+    // exclusion
+    $exclude_by_field = ee()->TMPL->fetch_param('exclude_if_field_value', '');
+    $exclude_by_field = $this->_get_field_id($exclude_by_field);
 
     if (!empty($filters) || !empty($relationship_filters)) {
       // no soft limit if filters present
@@ -134,6 +138,9 @@ class Alpha_list {
     }
     if (!empty($relationship_filters)) {
       $result = $result->where_in('channel_titles.entry_id', $relationship_parents);
+    }
+    if (!empty($exclude_by_field)) {
+      $result = $result->where("($exclude_by_field = 0 OR $exclude_by_field = '')");
     }
     $result = $result->order_by('val asc')->get()->result();
 
