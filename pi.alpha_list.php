@@ -160,6 +160,7 @@ class Alpha_list {
         $result = $result->where("($exclude_if_field_empty != 0 AND $exclude_if_field_empty != '')");
       }
     }
+    $result = $result->where('channel_titles.status', 'open');
     $result = $result->order_by('val asc')->get()->result();
 
     $this->entry_lookup = $result;
